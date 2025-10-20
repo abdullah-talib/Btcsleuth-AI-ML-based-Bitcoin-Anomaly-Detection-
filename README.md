@@ -44,7 +44,7 @@ BTCSleuth is a Flask web app that helps you find suspicious Bitcoin transactions
 ## Quick Start
 1. **Clone the repo:**
    ```bash
-   git clone <your-repo-url>
+   git clone https://github.com/abdullah-talib/Btcsleuth-AI-ML-based-Bitcoin-Anomaly-Detection-
    cd BTCsleuth
    ```
 2. **Install dependencies:**
