@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - Bitcoin Anomaly Detection System{% endblock %}
+
+{% block head %}
+<script>
+    // Pass chart data to JavaScript
+    window.chartData = '{{ chart_data|tojson|safe }}';
+</script>
+{% endblock %}
+
+{% block content %}
+<!-- Dashboard content starts here -->
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3 mb-0">
+                <i class="fas fa-tachometer-alt"></i> Dashboard
+            </h1>
+            <button class="btn btn-outline-primary refresh-btn">
+                <i class="fas fa-sync-alt"></i> Refresh
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row g-4 mb-4">
+    <div class="col-md-6 col-lg-3">
+        <div class="card stats-card">
+            <div class="card-body text-center">
+                <i class="fas fa-chart-bar stats-icon text-primary"></i>
+                <div class="stats-number" id="totalAnalyses">{{ total_analyses }}</div>
+                <div class="stats-label">Total Analyses</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="card stats-card">
+            <div class="card-body text-center">
+                <i class="fas fa-exclamation-triangle stats-icon text-danger"></i>
+                <div class="stats-number" id="totalAnomalies">{{ total_anomalies }}</div>
+                <div class="stats-label">Total Anomalies</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="card stats-card">
+            <div class="card-body text-center">
+                <i class="fas fa-percentage stats-icon text-success"></i>
+                <div class="stats-number">
+                    {{ "%.1f"|format((total_anomalies / total_analyses * 100) if total_analyses > 0 else 0) }}%
+                </div>
+                <div class="stats-label">Anomaly Rate</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3">
+        <div class="card stats-card">
+            <div class="card-body text-center">
+                <i class="fas fa-clock stats-icon text-info"></i>
+                <div class="stats-number" id="lastUpdate">
+                    {{ recent_analyses[0].created_at.strftime('%H:%M') if recent_analyses else '--:--' }}
+                </div>
+                <div class="stats-label">Last Analysis</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts and Analytics -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-line"></i> Analysis Activity
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="dashboardChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-bell"></i> Recent Alerts
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_alerts %}
+                    <div class="activity-log">
+                        {% for alert in recent_alerts %}
+                            <div class="alert-item severity-{{ alert.severity }}">
+                                <div class="d-flex justify-content-between">
+                                    <span class="fw-bold">{{ alert.alert_type.title() }}</span>
+                                    <span class="activity-time">{{ alert.created_at.strftime('%H:%M') }}</span>
+                                </div>
+                                <div class="text-muted">{{ alert.message }}</div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-bell-slash"></i>
+                        <p>No recent alerts</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-bolt"></i> Quick Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-6">
+                        <a href="{{ url_for('main.upload') }}" class="btn btn-primary w-100">
+                            <i class="fas fa-upload"></i><br>
+                            Upload Analysis
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{{ url_for('main.live_analysis') }}" class="btn btn-success w-100">
+                            <i class="fas fa-chart-line"></i><br>
+                            Live Analysis
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{{ url_for('binance.testnet') }}" class="btn btn-info w-100">
+                            <i class="fas fa-flask"></i><br>
+                            Testnet
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{{ url_for('main.results_blank') }}" class="btn btn-warning w-100">
+                            <i class="fas fa-chart-pie"></i><br>
+                            View Results
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-history"></i> Recent Activity
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_activities %}
+                    <div class="activity-log" id="recentActivities">
+                        {% for activity in recent_activities %}
+                            <div class="activity-item">
+                                <div class="d-flex justify-content-between">
+                                    <span>{{ activity.action }}</span>
+                                    <span class="activity-time">{{ activity.timestamp.strftime('%H:%M') }}</span>
+                                </div>
+                                {% if activity.details %}
+                                    <small class="text-muted">{{ activity.details }}</small>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
+                    </div>
+                    <div class="mt-3">
+                        <a href="{{ url_for('main.activity_logs') }}" class="btn btn-outline-secondary btn-sm">
+                            <i class="fas fa-eye"></i> View All Activity
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-history"></i>
+                        <p>No recent activity</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Analyses -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-list"></i> Recent Analyses
+                </h5>
+                <button class="btn btn-outline-danger btn-sm" onclick="dashboardUtils.clearAllAnalyses()">
+                    <i class="fas fa-trash"></i> Clear All
+                </button>
+            </div>
+            <div class="card-body">
+                {% if recent_analyses %}
+                    <div class="table-responsive" style="max-height: 350px; overflow-y: auto;">
+                        <table class="table table-dark table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Type</th>
+                                    <th>Filename</th>
+                                    <th>Transactions</th>
+                                    <th>Anomalies</th>
+                                    <th>Accuracy</th>
+                                    <th>Date</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for analysis in recent_analyses %}
+                                    <tr>
+                                        <td>{{ analysis.id }}</td>
+                                        <td>
+                                            <span class="badge bg-{{ 'primary' if analysis.analysis_type == 'upload' else 'success' if analysis.analysis_type == 'live' else 'info' }}">
+                                                {{ analysis.analysis_type.title() }}
+                                            </span>
+                                        </td>
+                                        <td>{{ analysis.filename or 'N/A' }}</td>
+                                        <td>{{ analysis.total_transactions }}</td>
+                                        <td>
+                                            <span class="badge bg-{{ 'danger' if analysis.anomalies_detected > 0 else 'success' }}">
+                                                {{ analysis.anomalies_detected }}
+                                            </span>
+                                        </td>
+                                        <td>{{ "%.1f"|format(analysis.accuracy_score * 100) }}%</td>
+                                        <td>{{ analysis.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                                        <td>
+                                            <a href="{{ url_for('main.results', analysis_id=analysis.id) }}" class="btn btn-outline-primary btn-sm">
+                                                <i class="fas fa-eye"></i> View
+                                            </a>
+                                            <a href="{{ url_for('main.download_report', analysis_id=analysis.id) }}" class="btn btn-outline-success btn-sm">
+                                                <i class="fas fa-download"></i> Report
+                                            </a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-chart-bar"></i>
+                        <h5>No analyses yet</h5>
+                        <p>Upload a CSV file or start live analysis to see results here</p>
+                        <a href="{{ url_for('main.upload') }}" class="btn btn-primary">
+                            <i class="fas fa-upload"></i> Start Analysis
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+<!-- Dashboard content ends here -->
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

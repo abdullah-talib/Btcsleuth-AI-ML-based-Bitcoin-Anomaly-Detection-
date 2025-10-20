@@ -1,0 +1,404 @@
+{% extends "base.html" %}
+
+{% block title %}Live Analysis - Bitcoin Anomaly Detection System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3 mb-0">
+                <i class="fas fa-chart-line"></i> Live BTC Analysis
+                <span class="live-indicator" id="liveIndicator" style="display: none;"></span>
+            </h1>
+            <div>
+                <button class="btn btn-outline-secondary" id="refreshMarketData">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Control Panel -->
+<div class="row g-4 mb-4">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-play-circle"></i> Analysis Controls
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                                        <div class="d-flex gap-2">
+                    <button class="btn btn-success" id="startAnalysis">
+                        <i class="fas fa-play"></i> Start Analysis
+                    </button>
+                    <button class="btn btn-danger" id="stopAnalysis" disabled>
+                        <i class="fas fa-stop"></i> Stop Analysis
+                    </button>
+                </div>
+
+                    </div>
+                    <div class="col-md-6">
+                        <div class="text-end">
+                            <small class="text-muted">Status: </small>
+                            <span id="analysisStatus" class="text-secondary">Stopped</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-bell"></i> Alert Settings
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="alertSound" checked>
+                    <label class="form-check-label" for="alertSound">
+                        Sound Alerts
+                    </label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="alertEmail">
+                    <label class="form-check-label" for="alertEmail">
+                        Email Notifications
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Market Data -->
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fab fa-bitcoin"></i> BTC/USDT Market Data
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="market-data">
+                    <div class="market-item">
+                        <div class="market-label">Current Price</div>
+                        <div class="market-value" id="currentPrice">$--,---</div>
+                    </div>
+                    <div class="market-item">
+                        <div class="market-label">24h Change</div>
+                        <div class="market-change" id="priceChange">--%</div>
+                    </div>
+                    <div class="market-item">
+                        <div class="market-label">24h Volume</div>
+                        <div class="market-value" id="volume24h">--,---</div>
+                    </div>
+                    <div class="market-item">
+                        <div class="market-label">Market Cap</div>
+                        <div class="market-value">$1.28T</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Analysis Statistics -->
+<div class="row g-4 mb-4">
+    <div class="col-md-6 col-lg-3">
+        <div class="card stats-card">
+            <div class="card-body text-center">
+                <i class="fas fa-list stats-icon text-primary"></i>
+                <div class="stats-number" id="totalTransactions">0</div>
+                <div class="stats-label">Total Transactions</div>
+                <small class="text-muted">(1000 max)</small>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3">
+        <div class="card stats-card">
+            <div class="card-body text-center">
+                <i class="fas fa-exclamation-triangle stats-icon text-danger"></i>
+                <div class="stats-number" id="anomaliesDetected">0</div>
+                <div class="stats-label">Anomalies Detected</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3">
+        <div class="card stats-card">
+            <div class="card-body text-center">
+                <i class="fas fa-percentage stats-icon text-success"></i>
+                <div class="stats-number" id="accuracyScore">0.0%</div>
+                <div class="stats-label">Accuracy Score</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3">
+        <div class="card stats-card">
+            <div class="card-body text-center">
+                <i class="fas fa-clock stats-icon text-info"></i>
+                <div class="stats-number" id="lastUpdate">--:--</div>
+                <div class="stats-label">Last Update</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Enhanced Transaction Info -->
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle"></i> Transaction Analysis Info
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h4 text-primary" id="currentPageDisplay">1</div>
+                            <small class="text-muted">Current Page</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h4 text-success" id="totalPagesDisplay">1</div>
+                            <small class="text-muted">Total Pages</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h4 text-info" id="transactionsPerPageDisplay">50</div>
+                            <small class="text-muted">Per Page</small>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <div class="h4 text-warning" id="analysisTimeDisplay">--</div>
+                            <small class="text-muted">Analysis Time</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<!-- Charts -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-line"></i> BTC Price Chart
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="priceChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-exclamation-triangle"></i> Anomaly Detection
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="anomalyChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Real-time Alerts -->
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-bell"></i> Real-time Alerts
+                </h5>
+            </div>
+            <div class="card-body">
+                <div id="alertsContainer" class="alerts-scroll">
+                    <div class="text-center text-muted" id="noAlertsMessage">
+                        <i class="fas fa-bell-slash"></i>
+                        <p>No alerts yet. Anomalies will appear here when detected.</p>
+                    </div>
+                    <!-- Alerts will be dynamically added here -->
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Transaction Analysis -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-list"></i> Recent Transactions
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive transactions-scroll" style="max-height: 400px; overflow-y: auto;">
+                    <table class="table table-dark table-sm">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Price</th>
+                                <th>Quantity</th>
+                                <th>Total</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="transactionsTable">
+                            <tr>
+                                <td colspan="5" class="text-center text-muted">
+                                    <i class="fas fa-clock"></i> Waiting for live data...
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- Pagination for 1000 transactions -->
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <div class="text-muted">
+                        <small>Showing <span id="showingRange">0-0</span> of <span id="totalTransactionsCount">0</span> transactions</small>
+                    </div>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button type="button" class="btn btn-outline-secondary" id="prevPage" disabled>
+                            <i class="fas fa-chevron-left"></i> Previous
+                        </button>
+                        <span class="btn btn-outline-secondary disabled" id="currentPage">Page 1</span>
+                        <button type="button" class="btn btn-outline-secondary" id="nextPage" disabled>
+                            Next <i class="fas fa-chevron-right"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-cogs"></i> Analysis Settings
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">Update Frequency</label>
+                    <select class="form-select" id="updateFrequency">
+                        <option value="5">5 seconds</option>
+                        <option value="10" selected>10 seconds</option>
+                        <option value="30">30 seconds</option>
+                        <option value="60">1 minute</option>
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Sensitivity</label>
+                    <select class="form-select" id="sensitivity">
+                        <option value="low">Low</option>
+                        <option value="medium" selected>Medium</option>
+                        <option value="high">High</option>
+                    </select>
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Models to Use</label>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="useSVM" checked>
+                        <label class="form-check-label" for="useSVM">SVM</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="useRF" checked>
+                        <label class="form-check-label" for="useRF">Random Forest</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="useAda" checked>
+                        <label class="form-check-label" for="useAda">AdaBoost</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="useXGB" checked>
+                        <label class="form-check-label" for="useXGB">XGBoost</label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- System Status -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-server"></i> System Status
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <i class="fas fa-check-circle text-success"></i>
+                            <div class="fw-bold">Binance API</div>
+                            <div class="text-muted">Connected</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <i class="fas fa-check-circle text-success"></i>
+                            <div class="fw-bold">ML Models</div>
+                            <div class="text-muted">Loaded</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <i class="fas fa-check-circle text-success"></i>
+                            <div class="fw-bold">Database</div>
+                            <div class="text-muted">Online</div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="text-center">
+                            <i class="fas fa-check-circle text-success"></i>
+                            <div class="fw-bold">Notifications</div>
+                            <div class="text-muted">Active</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/live-analysis.js') }}"></script>
+{% endblock %}

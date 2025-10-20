@@ -1,0 +1,437 @@
+{% extends "base.html" %}
+
+{% block title %}Activity Logs - Bitcoin Anomaly Detection System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3 mb-0">
+                <i class="fas fa-history"></i> Activity Logs
+            </h1>
+            <div>
+                <button class="btn btn-outline-secondary" onclick="location.reload()">
+                    <i class="fas fa-sync-alt"></i> Refresh
+                </button>
+                <button class="btn btn-outline-primary" onclick="exportLogs()">
+                    <i class="fas fa-download"></i> Export
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Panel -->
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-filter"></i> Filter Activities
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">Action Type</label>
+                        <select class="form-select" name="action">
+                            <option value="">All Actions</option>
+                            <option value="User Login" {{ 'selected' if request.args.get('action') == 'User Login' }}>User Login</option>
+                            <option value="User Logout" {{ 'selected' if request.args.get('action') == 'User Logout' }}>User Logout</option>
+                            <option value="File Upload" {{ 'selected' if request.args.get('action') == 'File Upload' }}>File Upload</option>
+                            <option value="Live Analysis" {{ 'selected' if request.args.get('action') == 'Live Analysis' }}>Live Analysis</option>
+                            <option value="Testnet Simulation" {{ 'selected' if request.args.get('action') == 'Testnet Simulation' }}>Testnet Simulation</option>
+                            <option value="Report Download" {{ 'selected' if request.args.get('action') == 'Report Download' }}>Report Download</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Date From</label>
+                        <input type="date" class="form-control" name="date_from" value="{{ request.args.get('date_from', '') }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Date To</label>
+                        <input type="date" class="form-control" name="date_to" value="{{ request.args.get('date_to', '') }}">
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label">Search</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" name="search" placeholder="Search details..." value="{{ request.args.get('search', '') }}">
+                            <button class="btn btn-primary" type="submit">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Activity Statistics -->
+<div class="row g-4 mb-4">
+    <div class="col-md-6 col-lg-3">
+        <div class="card stats-card">
+            <div class="card-body text-center">
+                <i class="fas fa-sign-in-alt stats-icon text-success"></i>
+                <div class="stats-number">{{ logs.total if logs else 0 }}</div>
+                <div class="stats-label">Total Activities</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3">
+        <div class="card stats-card">
+            <div class="card-body text-center">
+                <i class="fas fa-calendar-day stats-icon text-primary"></i>
+                <div class="stats-number">
+                    {{ todays_activities_count }}
+                </div>
+                <div class="stats-label">Today's Activities</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3">
+        <div class="card stats-card">
+            <div class="card-body text-center">
+                <i class="fas fa-upload stats-icon text-warning"></i>
+                <div class="stats-number">
+                    {% if logs %}
+                        {{ logs.items|selectattr('action', 'equalto', 'File Upload')|list|length }}
+                    {% else %}
+                        0
+                    {% endif %}
+                </div>
+                <div class="stats-label">File Uploads</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3">
+        <div class="card stats-card">
+            <div class="card-body text-center">
+                <i class="fas fa-chart-line stats-icon text-info"></i>
+                <div class="stats-number">
+                    {% if logs %}
+                        {{ logs.items|selectattr('action', 'equalto', 'Live Analysis')|list|length }}
+                    {% else %}
+                        0
+                    {% endif %}
+                </div>
+                <div class="stats-label">Live Analyses</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if logs and logs.items %}
+<div class="row mt-4 mb-3">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-pie"></i> Activity Breakdown
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="activityChart"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-list"></i> Top Actions
+                </h5>
+            </div>
+            <div class="card-body">
+                <canvas id="topActionsChart"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Activity Timeline -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-clock"></i> Activity Timeline
+                </h5>
+                <button class="btn btn-outline-danger btn-sm" onclick="clearAllLogs()">
+                    <i class="fas fa-trash"></i> Clear All
+                </button>
+            </div>
+            <div class="card-body">
+                {% if logs and logs.items %}
+                    <div class="table-responsive">
+                        <table class="table table-dark table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Time</th>
+                                    <th>Action</th>
+                                    <th>Details</th>
+                                    <th>IP Address</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in logs.items %}
+                                    <tr>
+                                        <td>
+                                            <div class="fw-bold">{{ log.timestamp.strftime('%H:%M:%S') }}</div>
+                                            <small class="text-muted">{{ log.timestamp.strftime('%Y-%m-%d') }}</small>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{{ 
+                                                'success' if 'Login' in log.action else
+                                                'info' if 'Logout' in log.action else
+                                                'primary' if 'Upload' in log.action else
+                                                'warning' if 'Analysis' in log.action else
+                                                'secondary' if 'Download' in log.action else
+                                                'danger' if 'Error' in log.action else
+                                                'dark'
+                                            }}">
+                                                <i class="fas fa-{{ 
+                                                    'sign-in-alt' if 'Login' in log.action else
+                                                    'sign-out-alt' if 'Logout' in log.action else
+                                                    'upload' if 'Upload' in log.action else
+                                                    'chart-line' if 'Analysis' in log.action else
+                                                    'download' if 'Download' in log.action else
+                                                    'exclamation-triangle' if 'Error' in log.action else
+                                                    'info-circle'
+                                                }}"></i>
+                                                {{ log.action }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            {% if log.details %}
+                                                <div class="text-wrap" style="max-width: 300px;">
+                                                    {{ log.details }}
+                                                </div>
+                                            {% else %}
+                                                <span class="text-muted">-</span>
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <code class="text-muted">{{ log.ip_address or 'N/A' }}</code>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-{{ 
+                                                'danger' if 'Error' in log.action else
+                                                'success'
+                                            }}">
+                                                <i class="fas fa-{{ 
+                                                    'times' if 'Error' in log.action else
+                                                    'check'
+                                                }}"></i>
+                                                {{ 'Failed' if 'Error' in log.action else 'Success' }}
+                                            </span>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination -->
+                    {% if logs.pages > 1 %}
+                        <nav aria-label="Activity logs pagination" class="mt-4">
+                            <ul class="pagination justify-content-center">
+                                {% if logs.has_prev %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('main.activity_logs', page=logs.prev_num, **filtered_args) }}">
+                                            <i class="fas fa-chevron-left"></i> Previous
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">
+                                            <i class="fas fa-chevron-left"></i> Previous
+                                        </span>
+                                    </li>
+                                {% endif %}
+                                
+                                {% for page_num in logs.iter_pages() %}
+                                    {% if page_num %}
+                                        {% if page_num != logs.page %}
+                                            <li class="page-item">
+                                                <a class="page-link" href="{{ url_for('main.activity_logs', page=page_num, **filtered_args) }}">
+                                                    {{ page_num }}
+                                                </a>
+                                            </li>
+                                        {% else %}
+                                            <li class="page-item active">
+                                                <span class="page-link">{{ page_num }}</span>
+                                            </li>
+                                        {% endif %}
+                                    {% else %}
+                                        <li class="page-item disabled">
+                                            <span class="page-link">...</span>
+                                        </li>
+                                    {% endif %}
+                                {% endfor %}
+                                
+                                {% if logs.has_next %}
+                                    <li class="page-item">
+                                        <a class="page-link" href="{{ url_for('main.activity_logs', page=logs.next_num, **filtered_args) }}">
+                                            Next <i class="fas fa-chevron-right"></i>
+                                        </a>
+                                    </li>
+                                {% else %}
+                                    <li class="page-item disabled">
+                                        <span class="page-link">
+                                            Next <i class="fas fa-chevron-right"></i>
+                                        </span>
+                                    </li>
+                                {% endif %}
+                            </ul>
+                        </nav>
+                    {% endif %}
+                    
+                {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-history"></i>
+                        <h3>No Activity Logs</h3>
+                        <p class="text-muted">
+                            {% if request.args %}
+                                No activities found matching your filters. Try adjusting your search criteria.
+                            {% else %}
+                                No activities recorded yet. Start using the system to see logs here.
+                            {% endif %}
+                        </p>
+                        {% if request.args %}
+                            <a href="{{ url_for('main.activity_logs') }}" class="btn btn-primary">
+                                <i class="fas fa-times"></i> Clear Filters
+                            </a>
+                        {% else %}
+                            <a href="{{ url_for('main.dashboard') }}" class="btn btn-primary">
+                                <i class="fas fa-tachometer-alt"></i> Go to Dashboard
+                            </a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+<script>
+function exportLogs() {
+    // Create CSV data
+    const logs = [
+        ['Timestamp', 'Action', 'Details', 'IP Address', 'Status']
+    ];
+    
+    // Add table data
+    document.querySelectorAll('tbody tr').forEach(row => {
+        const cells = row.querySelectorAll('td');
+        if (cells.length > 1) {
+            logs.push([
+                cells[0].textContent.trim(),
+                cells[1].textContent.trim(),
+                cells[2].textContent.trim(),
+                cells[3].textContent.trim(),
+                cells[4].textContent.trim()
+            ]);
+        }
+    });
+    
+    // Convert to CSV
+    const csvContent = logs.map(row => row.join(',')).join('\n');
+    
+    // Download file
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `activity_logs_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+}
+
+{% if logs and logs.items %}
+document.addEventListener('DOMContentLoaded', function() {
+    // Activity breakdown chart
+    const activityCtx = document.getElementById('activityChart');
+    const topActionsCtx = document.getElementById('topActionsChart');
+    if (activityCtx || topActionsCtx) {
+        const actions = {};
+        {% for log in logs.items %}
+            actions['{{ log.action }}'] = (actions['{{ log.action }}'] || 0) + 1;
+        {% endfor %}
+        // Activity Breakdown (doughnut)
+        if (activityCtx) {
+            new Chart(activityCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(actions),
+                    datasets: [{
+                        data: Object.values(actions),
+                        backgroundColor: [
+                            '#27ae60', '#3498db', '#f39c12', '#e74c3c', 
+                            '#9b59b6', '#1abc9c', '#34495e', '#95a5a6'
+                        ]
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: '#fff'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        // Top Actions (bar)
+        if (topActionsCtx) {
+            // Sort actions by count descending and take top 7
+            const sorted = Object.entries(actions).sort((a, b) => b[1] - a[1]).slice(0, 7);
+            new Chart(topActionsCtx, {
+                type: 'bar',
+                data: {
+                    labels: sorted.map(x => x[0]),
+                    datasets: [{
+                        label: 'Count',
+                        data: sorted.map(x => x[1]),
+                        backgroundColor: '#f39c12',
+                        borderColor: '#e67e22',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        title: { display: true, text: 'Top Actions', color: '#fff' }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: { color: '#bbb' },
+                            grid: { color: '#444' }
+                        },
+                        x: {
+                            ticks: { color: '#bbb' },
+                            grid: { color: '#444' }
+                        }
+                    }
+                }
+            });
+        }
+    }
+});
+{% endif %}
+</script>
+{% endblock %}

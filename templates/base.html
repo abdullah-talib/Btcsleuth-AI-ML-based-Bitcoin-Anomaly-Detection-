@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en" data-bs-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Bitcoin Anomaly Detection System{% endblock %}</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/favicon.svg') }}">
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css" rel="stylesheet">
+    
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <style>
+      html, body {
+        height: 100%;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+      }
+      main.container-fluid.py-4 {
+        flex: 1 0 auto;
+      }
+      .sticky-footer {
+        flex-shrink: 0;
+        width: 100%;
+        margin-top: 0 !important;
+      }
+    </style>
+    
+    {% block head %}{% endblock %}
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('main.index') }}">
+                <i class="fab fa-bitcoin"></i>
+                BTCSLEUTH
+            </a>
+            
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    {% if current_user.is_authenticated %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('main.dashboard') }}">
+                                <i class="fas fa-tachometer-alt"></i> Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('main.upload') }}">
+                                <i class="fas fa-upload"></i> Upload
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('main.live_analysis') }}">
+                                <i class="fas fa-chart-line"></i> Live Analysis
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('binance.testnet') }}">
+                                <i class="fas fa-flask"></i> Testnet
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('main.activity_logs') }}">
+                                <i class="fas fa-history"></i> Activity Logs
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+                
+                <ul class="navbar-nav">
+                    {% if current_user.is_authenticated %}
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-user"></i> {{ current_user.username }}
+                            </a>
+                            <ul class="dropdown-menu" style="left: -27%; --bs-dropdown-min-width:0rem;">
+                                <li><a class="dropdown-item" href="{{ url_for('main.settings') }}"><i class="fas fa-user-cog"></i> Profile</a></li>
+                                <li><a class="dropdown-item" href="{{ url_for('main.settings') }}"><i class="fas fa-cog"></i> Settings</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('auth.login') }}">
+                                <i class="fas fa-sign-in-alt"></i> Login
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ url_for('auth.register') }}">
+                                <i class="fas fa-user-plus"></i> Register
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+    
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="container-fluid mt-3">
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+    
+    <!-- Main Content -->
+    <main class="container-fluid py-4">
+        {% block content %}{% endblock %}
+    </main>
+    
+    <!-- Footer -->
+    <footer class="bg-dark text-center py-3 sticky-footer">
+        <div class="container">
+            <span class="text-muted">
+                © 2025 Bitcoin Anomaly Detection System. 
+                <i class="fas fa-shield-alt"></i> Secure Transaction Analysis
+            </span>
+        </div>
+    </footer>
+    
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Auto-dismiss alerts after 2 seconds -->
+    <script>
+      window.addEventListener('DOMContentLoaded', function() {
+        setTimeout(function() {
+          document.querySelectorAll('.alert').forEach(function(alert) {
+            // Bootstrap 5 fade out
+            alert.classList.remove('show');
+            alert.classList.add('hide');
+            setTimeout(function() {
+              alert.remove();
+            }, 500); // Wait for fade out
+          });
+        }, 2000);
+      });
+    </script>
+    <!-- Custom JS -->
+    {% block scripts %}{% endblock %}
+</body>
+</html>
+

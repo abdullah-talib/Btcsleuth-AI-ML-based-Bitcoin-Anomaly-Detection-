@@ -1,0 +1,348 @@
+{% extends "base.html" %}
+
+{% block title %}Testnet Simulation - Bitcoin Anomaly Detection System{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3 mb-0">
+                <i class="fas fa-flask"></i> Testnet Simulation
+            </h1>
+            <div>
+                <button class="btn btn-outline-warning" onclick="testnetUtils.resetSimulation()">
+                    <i class="fas fa-undo"></i> Reset
+                </button>
+                <button class="btn btn-outline-success" onclick="testnetUtils.exportSimulationResults()">
+                    <i class="fas fa-download"></i> Export
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Configuration Panel -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-cogs"></i> Simulation Configuration
+                </h5>
+            </div>
+            <div class="card-body">
+                <form id="testnetConfig">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Number of Transactions</label>
+                            <input type="number" class="form-control" id="numTransactions" value="50" min="10">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Transaction Type</label>
+                            <select class="form-select" id="transactionType">
+                                <option value="mixed">Mixed (Normal + Anomalous)</option>
+                                <option value="normal">Normal Only</option>
+                                <option value="anomaly">Anomaly Heavy</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Anomaly Rate (%)</label>
+                            <input type="range" class="form-range" id="anomalyRate" min="0" max="50" value="10">
+                            <div class="text-muted">
+                                <span id="anomalyRateValue">10</span>%
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Price Range</label>
+                            <select class="form-select" id="priceRange">
+                                <option value="normal">Normal ($60k - $70k)</option>
+                                <option value="high">High ($70k - $80k)</option>
+                                <option value="extreme">Extreme ($50k - $90k)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Volume Range</label>
+                            <select class="form-select" id="volumeRange">
+                                <option value="normal">Normal (1-10 BTC)</option>
+                                <option value="high">High (10-50 BTC)</option>
+                                <option value="extreme">Extreme (0.1-100 BTC)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Simulation Speed</label>
+                            <select class="form-select" id="simulationSpeed">
+                                <option value="slow">Slow (5s intervals)</option>
+                                <option value="medium" selected>Medium (2s intervals)</option>
+                                <option value="fast">Fast (1s intervals)</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Configuration
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-rocket"></i> Quick Presets
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary preset-btn" data-preset="basic">
+                        <i class="fas fa-play"></i> Basic Test
+                        <small class="d-block text-muted">50 transactions, 10% anomalies</small>
+                    </button>
+                    <button class="btn btn-outline-warning preset-btn" data-preset="stress">
+                        <i class="fas fa-fire"></i> Stress Test
+                        <small class="d-block text-muted">500 transactions, 25% anomalies</small>
+                    </button>
+                    <button class="btn btn-outline-danger preset-btn" data-preset="anomaly">
+                        <i class="fas fa-exclamation-triangle"></i> Anomaly Focus
+                        <small class="d-block text-muted">100 transactions, 50% anomalies</small>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Simulation Controls -->
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-play-circle"></i> Simulation Controls
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row align-items-center">
+                    <div class="col-md-6">
+                        <div class="d-flex gap-2">
+                            <button class="btn btn-success btn-lg" id="simulateTransaction">
+                                <i class="fas fa-play"></i> Run Simulation
+                            </button>
+                            <button class="btn btn-outline-secondary">
+                                <i class="fas fa-pause"></i> Pause
+                            </button>
+                            <button class="btn btn-outline-danger">
+                                <i class="fas fa-stop"></i> Stop
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="text-end">
+                            <div class="spinner-border text-primary" role="status" id="simulationLoading" style="display: none;">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Results Display -->
+<div class="row g-4 mb-4" id="simulationResults" style="display: none;">
+    <!-- Results will be dynamically inserted here -->
+</div>
+
+<!-- Simulation Visualization (Animated Transaction Flow) -->
+<div class="row g-4 mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-random"></i> Simulation Process Flow
+                </h5>
+            </div>
+            <div class="card-body" style="height: 340px; overflow-y: auto; background: #23272b;">
+                <div id="simulation-visualization"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-bar"></i> Simulation Results
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="simulationChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-brain"></i> Model Performance
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="chart-container">
+                    <canvas id="modelChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Testnet Configuration -->
+<div class="row g-4 mb-4">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-server"></i> Testnet Environment
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="testnet-config">
+                    <h6><i class="fas fa-network-wired"></i> Network Configuration</h6>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label">Network</label>
+                            <select class="form-select form-select-sm">
+                                <option>Binance Testnet</option>
+                                <option>Bitcoin Testnet</option>
+                                <option>Ethereum Testnet</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">API Endpoint</label>
+                            <input type="text" class="form-control form-control-sm" value="https://testnet.binance.vision" readonly>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Connection Status</label>
+                            <div class="form-control form-control-sm bg-success text-white">
+                                <i class="fas fa-check-circle"></i> Connected
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="testnet-config">
+                    <h6><i class="fas fa-key"></i> API Configuration</h6>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">API Key Status</label>
+                            <div class="form-control form-control-sm bg-success text-white">
+                                <i class="fas fa-shield-alt"></i> Valid
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Rate Limit</label>
+                            <div class="form-control form-control-sm">
+                                <i class="fas fa-tachometer-alt"></i> 1200/min
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle"></i> Testnet Info
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="mb-3">
+                    <h6><i class="fas fa-coins text-warning"></i> Test Assets</h6>
+                    <ul class="list-unstyled">
+                        <li>• BTC: 10.0000</li>
+                        <li>• USDT: 100,000</li>
+                        <li>• ETH: 50.0000</li>
+                    </ul>
+                </div>
+                
+                <div class="mb-3">
+                    <h6><i class="fas fa-chart-line text-success"></i> Simulation Stats</h6>
+                    <ul class="list-unstyled">
+                        <li>• Total Runs: 0</li>
+                        <li>• Anomalies Found: 0</li>
+                        <li>• Avg. Accuracy: 0%</li>
+                    </ul>
+                </div>
+                
+                <div class="text-center">
+                    <button class="btn btn-outline-info btn-sm">
+                        <i class="fas fa-question-circle"></i> Help
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Transaction History -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center mb-2">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-history"></i> Simulation History
+                </h5>
+                <button class="btn btn-outline-danger btn-sm" onclick="testnetUtils.clearSimulationHistory()">
+                    <i class="fas fa-trash"></i> Clear History
+                </button>
+            </div>
+            <div class="table-responsive" style="max-height: 260px; overflow-y: auto;">
+                <table class="table table-dark table-hover">
+                    <thead>
+                        <tr>
+                            <th>Run ID</th>
+                            <th>Timestamp</th>
+                            <th>Transactions</th>
+                            <th>Anomalies</th>
+                            <th>Type</th>
+                            <th>Accuracy</th>
+                            <th>Duration</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="simulationHistory">
+                        <tr>
+                            <td colspan="8" class="text-center text-muted">
+                                <i class="fas fa-flask"></i> No simulations run yet
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/testnet.js') }}"></script>
+<script>
+// Update anomaly rate display
+document.getElementById('anomalyRate').addEventListener('input', function(e) {
+    document.getElementById('anomalyRateValue').textContent = e.target.value;
+});
+</script>
+{% endblock %}

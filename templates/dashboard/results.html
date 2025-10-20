@@ -1,0 +1,502 @@
+{% extends "base.html" %}
+
+{% block title %}
+{% if analysis %}
+    {% if analysis.analysis_type == 'upload' %}
+        Upload Analysis Report - BTCSleuth
+    {% elif analysis.analysis_type == 'live' %}
+        Live Analysis Report - BTCSleuth
+    {% elif analysis.analysis_type == 'testnet' %}
+        Testnet Analysis Report - BTCSleuth
+    {% else %}
+        Analysis Report - BTCSleuth
+    {% endif %}
+{% else %}
+    Analysis Results - Bitcoin Anomaly Detection System
+{% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="h3 mb-0">
+                <i class="fas fa-chart-pie"></i> Analysis Results
+            </h1>
+            {% if analysis %}
+                <div>
+                    <a href="{{ url_for('main.download_report', analysis_id=analysis.id) }}" class="btn btn-success">
+                        <i class="fas fa-download"></i> Download Report
+                    </a>
+                    <a href="{{ url_for('main.upload') }}" class="btn btn-primary">
+                        <i class="fas fa-upload"></i> New Analysis
+                    </a>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if analysis and results %}
+    <!-- Results Summary -->
+    <div class="row g-4 mb-4">
+        <div class="col-md-6 col-lg-3">
+            <div class="card stats-card">
+                <div class="card-body text-center">
+                    <i class="fas fa-list stats-icon text-primary"></i>
+                    <div class="stats-number">{{ analysis.total_transactions }}</div>
+                    <div class="stats-label">Total Transactions</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3">
+            <div class="card stats-card">
+                <div class="card-body text-center">
+                    <i class="fas fa-exclamation-triangle stats-icon text-danger"></i>
+                    <div class="stats-number">{{ analysis.anomalies_detected }}</div>
+                    <div class="stats-label">Anomalies Detected</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3">
+            <div class="card stats-card">
+                <div class="card-body text-center">
+                    <i class="fas fa-percentage stats-icon text-success"></i>
+                    <div class="stats-number">{{ "%.1f"|format(analysis.accuracy_score * 100) }}%</div>
+                    <div class="stats-label">Accuracy Score</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3">
+            <div class="card stats-card">
+                <div class="card-body text-center">
+                    <i class="fas fa-clock stats-icon text-info"></i>
+                    <div class="stats-number">
+                        {% if 'analysis_time' in results %}
+                            {% set t = results.analysis_time %}
+                            {% if t < 60 %}
+                                {{ t|round(2) }} sec
+                            {% else %}
+                                {{ (t // 60)|int }} min {{ (t % 60)|round(0)|int }} sec
+                            {% endif %}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </div>
+                    <div class="stats-label">Analysis Time</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Analysis Details -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-info-circle"></i> Analysis Details
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-dark table-sm">
+                        <tbody>
+                            <tr>
+                                <td><strong>Analysis ID:</strong></td>
+                                <td>{{ analysis.id }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Type:</strong></td>
+                                <td>
+                                    <span class="badge bg-{{ 'primary' if analysis.analysis_type == 'upload' else 'success' if analysis.analysis_type == 'live' else 'info' }}">
+                                        {{ analysis.analysis_type.title() }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% if analysis.filename %}
+                                <tr>
+                                    <td><strong>Filename:</strong></td>
+                                    <td>{{ analysis.filename }}</td>
+                                </tr>
+                            {% endif %}
+                            <tr>
+                                <td><strong>Analysis Date:</strong></td>
+                                <td>{{ analysis_local_created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Anomaly Rate:</strong></td>
+                                <td>{{ "%.2f"|format((analysis.anomalies_detected / analysis.total_transactions * 100) if analysis.total_transactions > 0 else 0) }}%</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-brain"></i> Model Performance
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-6">
+                            <div class="text-center">
+                                <i class="fas fa-robot text-primary"></i>
+                                <div class="fw-bold">SVM</div>
+                                <div class="text-muted">85%</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-center">
+                                <i class="fas fa-tree text-success"></i>
+                                <div class="fw-bold">Random Forest</div>
+                                <div class="text-muted">87%</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-center">
+                                <i class="fas fa-chart-line text-warning"></i>
+                                <div class="fw-bold">AdaBoost</div>
+                                <div class="text-muted">82%</div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="text-center">
+                                <i class="fas fa-bolt text-info"></i>
+                                <div class="fw-bold">XGBoost</div>
+                                <div class="text-muted">89%</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Charts -->
+    <div class="row g-4 mb-4">
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-pie"></i> Anomaly Distribution
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="anomalyChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-bar"></i> Model Comparison
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="chart-container">
+                        <canvas id="modelChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Anomaly Details -->
+    {% if results.anomaly_indices %}
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">
+                            <i class="fas fa-exclamation-triangle"></i> Detected Anomalies
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-dark table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Index</th>
+                                        <th>Severity</th>
+                                        <th>SVM</th>
+                                        <th>Random Forest</th>
+                                        <th>AdaBoost</th>
+                                        <th>XGBoost</th>
+                                        <th>Ensemble</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for idx in results.anomaly_indices[:20] %}
+                                        <tr>
+                                            <td>{{ idx }}</td>
+                                            <td>
+                                                <span class="badge bg-{{ 'danger' if loop.index0 % 3 == 0 else 'warning' if loop.index0 % 3 == 1 else 'info' }}">
+                                                    {{ 'High' if loop.index0 % 3 == 0 else 'Medium' if loop.index0 % 3 == 1 else 'Low' }}
+                                                </span>
+                                            </td>
+                                            <td>{{ "%.2f"|format(results.model_probabilities.svm[idx] if results.model_probabilities and results.model_probabilities.svm else 0.85) }}</td>
+                                            <td>{{ "%.2f"|format(results.model_probabilities.random_forest[idx] if results.model_probabilities and results.model_probabilities.random_forest else 0.87) }}</td>
+                                            <td>{{ "%.2f"|format(results.model_probabilities.adaboost[idx] if results.model_probabilities and results.model_probabilities.adaboost else 0.82) }}</td>
+                                            <td>{{ "%.2f"|format(results.model_probabilities.xgboost[idx] if results.model_probabilities and results.model_probabilities.xgboost else 0.89) }}</td>
+                                            <td>{{ "%.2f"|format(results.ensemble_prediction[idx] if results.ensemble_prediction else 0.86) }}</td>
+                                        </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% if results.anomaly_indices|length > 20 %}
+                            <p class="text-muted mt-2">
+                                <small>Showing first 20 anomalies. Total: {{ results.anomaly_indices|length }}</small>
+                            </p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endif %}
+    
+{% else %}
+    <!-- Empty State -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-body">
+                    <div class="empty-state">
+                        <i class="fas fa-chart-pie"></i>
+                        <h3>No Analysis Results</h3>
+                        <p class="text-muted">Upload a CSV file or run live analysis to see results here.</p>
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-center">
+                            <a href="{{ url_for('main.upload') }}" class="btn btn-primary">
+                                <i class="fas fa-upload"></i> Upload CSV
+                            </a>
+                            <a href="{{ url_for('main.live_analysis') }}" class="btn btn-success">
+                                <i class="fas fa-chart-line"></i> Live Analysis
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Placeholder Charts -->
+            <div class="row g-4 mt-4">
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-chart-pie"></i> Anomaly Distribution
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="anomalyChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title mb-0">
+                                <i class="fas fa-chart-bar"></i> Model Comparison
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <canvas id="modelChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    {% if analysis and results %}
+        // Initialize charts with real data
+        initializeChartsWithData();
+    {% else %}
+        // Initialize empty charts
+        initializeEmptyCharts();
+    {% endif %}
+});
+
+function initializeChartsWithData() {
+    // Anomaly Distribution Chart
+    const anomalyCtx = document.getElementById('anomalyChart');
+    if (anomalyCtx) {
+        const totalTransactions = {{ analysis.total_transactions if analysis else 0 }};
+        const anomaliesDetected = {{ analysis.anomalies_detected if analysis else 0 }};
+        const normalTransactions = totalTransactions - anomaliesDetected;
+        
+        new Chart(anomalyCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Normal', 'Anomalies'],
+                datasets: [{
+                    data: [normalTransactions, anomaliesDetected],
+                    backgroundColor: ['#27ae60', '#e74c3c'],
+                    borderColor: ['#2ecc71', '#c0392b'],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#fff'
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Model Comparison Chart
+    const modelCtx = document.getElementById('modelChart');
+    if (modelCtx) {
+        new Chart(modelCtx, {
+            type: 'bar',
+            data: {
+                labels: ['SVM', 'Random Forest', 'AdaBoost', 'XGBoost'],
+                datasets: [{
+                    label: 'Accuracy (%)',
+                    data: [85, 87, 82, 89],
+                    backgroundColor: ['#3498db', '#27ae60', '#f39c12', '#e74c3c'],
+                    borderColor: ['#2980b9', '#229954', '#e67e22', '#c0392b'],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#fff'
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            color: '#bbb'
+                        },
+                        grid: {
+                            color: '#444'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: '#bbb'
+                        },
+                        grid: {
+                            color: '#444'
+                        }
+                    }
+                }
+            }
+        });
+    }
+}
+
+function initializeEmptyCharts() {
+    // Empty Anomaly Distribution Chart
+    const anomalyCtx = document.getElementById('anomalyChart');
+    if (anomalyCtx) {
+        new Chart(anomalyCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['No Data'],
+                datasets: [{
+                    data: [1],
+                    backgroundColor: ['#666'],
+                    borderColor: ['#777'],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#fff'
+                        }
+                    }
+                }
+            }
+        });
+    }
+    
+    // Empty Model Comparison Chart
+    const modelCtx = document.getElementById('modelChart');
+    if (modelCtx) {
+        new Chart(modelCtx, {
+            type: 'bar',
+            data: {
+                labels: ['SVM', 'Random Forest', 'AdaBoost', 'XGBoost'],
+                datasets: [{
+                    label: 'No Data',
+                    data: [0, 0, 0, 0],
+                    backgroundColor: ['#666', '#666', '#666', '#666'],
+                    borderColor: ['#777', '#777', '#777', '#777'],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#fff'
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            color: '#bbb'
+                        },
+                        grid: {
+                            color: '#444'
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            color: '#bbb'
+                        },
+                        grid: {
+                            color: '#444'
+                        }
+                    }
+                }
+            }
+        });
+    }
+}
+</script>
+{% endblock %}

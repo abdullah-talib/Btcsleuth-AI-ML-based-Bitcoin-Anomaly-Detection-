@@ -1,0 +1,401 @@
+/* Custom CSS for Bitcoin Anomaly Detection System */
+
+:root {
+    --primary-color: #f39c12;
+    --secondary-color: #2c3e50;
+    --success-color: #27ae60;
+    --danger-color: #e74c3c;
+    --warning-color: #f39c12;
+    --info-color: #3498db;
+    --dark-bg: #1a1a1a;
+    --card-bg: #2d2d2d;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--dark-bg);
+    color: #fff;
+}
+
+.navbar-brand {
+    font-weight: bold;
+    color: var(--primary-color) !important;
+}
+
+.navbar-brand i {
+    margin-right: 8px;
+}
+
+.card {
+    background-color: var(--card-bg);
+    border: 1px solid #444;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.card-header {
+    background-color: #333;
+    border-bottom: 1px solid #444;
+    font-weight: bold;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.btn-primary:hover {
+    background-color: #e67e22;
+    border-color: #e67e22;
+}
+
+.alert {
+    border-radius: 8px;
+    border: none;
+}
+
+.stats-card {
+    background: linear-gradient(135deg, var(--card-bg) 0%, #3a3a3a 100%);
+    border: 1px solid #444;
+    border-radius: 15px;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.stats-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+}
+
+.stats-icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.stats-number {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.stats-label {
+    color: #bbb;
+    font-size: 0.9rem;
+}
+
+.upload-area {
+    border: 2px dashed #666;
+    border-radius: 10px;
+    padding: 3rem;
+    text-align: center;
+    background-color: var(--card-bg);
+    transition: border-color 0.3s ease;
+}
+
+.upload-area:hover {
+    border-color: var(--primary-color);
+}
+
+.upload-area.dragover {
+    border-color: var(--success-color);
+    background-color: rgba(39, 174, 96, 0.1);
+}
+
+.file-upload-icon {
+    font-size: 4rem;
+    color: #666;
+    margin-bottom: 1rem;
+}
+
+.loading-spinner {
+    display: none;
+    text-align: center;
+    margin: 2rem 0;
+}
+
+.loading-spinner .spinner-border {
+    width: 3rem;
+    height: 3rem;
+    border-width: 0.3em;
+}
+
+.activity-log {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.activity-item {
+    padding: 0.75rem;
+    border-bottom: 1px solid #444;
+    border-radius: 5px;
+    margin-bottom: 0.5rem;
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-time {
+    font-size: 0.85rem;
+    color: #bbb;
+}
+
+.alert-item {
+    padding: 0.75rem;
+    border-left: 4px solid var(--warning-color);
+    margin-bottom: 0.5rem;
+    border-radius: 5px;
+}
+
+.alert-item.severity-high {
+    border-left-color: var(--danger-color);
+}
+
+.alert-item.severity-low {
+    border-left-color: var(--success-color);
+}
+
+.alert-item.severity-critical {
+    border-left-color: #8e44ad;
+}
+
+.chart-container {
+    position: relative;
+    height: 400px;
+    margin-bottom: 2rem;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #666;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+}
+
+.testnet-config {
+    background-color: #2a2a2a;
+    border: 1px solid #444;
+    border-radius: 10px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.simulation-controls {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.live-indicator {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    background-color: var(--success-color);
+    border-radius: 50%;
+    margin-right: 0.5rem;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(39, 174, 96, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(39, 174, 96, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(39, 174, 96, 0);
+    }
+}
+
+.market-data {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.market-item {
+    background-color: var(--card-bg);
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid #444;
+}
+
+.market-value {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.market-change {
+    font-size: 0.9rem;
+}
+
+.market-change.positive {
+    color: var(--success-color);
+}
+
+.market-change.negative {
+    color: var(--danger-color);
+}
+
+.table-dark {
+    background-color: var(--card-bg);
+}
+
+.table-dark th {
+    border-color: #444;
+    background-color: #333;
+}
+
+.table-dark td {
+    border-color: #444;
+}
+
+.pagination .page-link {
+    background-color: var(--card-bg);
+    border-color: #444;
+    color: #fff;
+}
+
+.pagination .page-link:hover {
+    background-color: #555;
+    border-color: #666;
+    color: #fff;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.form-control {
+    background-color: var(--card-bg);
+    border-color: #444;
+    color: #fff;
+}
+
+.form-control:focus {
+    background-color: var(--card-bg);
+    border-color: var(--primary-color);
+    color: #fff;
+    box-shadow: 0 0 0 0.2rem rgba(243, 156, 18, 0.25);
+}
+
+.form-select {
+    background-color: var(--card-bg);
+    border-color: #444;
+    color: #fff;
+}
+
+.form-select:focus {
+    background-color: var(--card-bg);
+    border-color: var(--primary-color);
+    color: #fff;
+    box-shadow: 0 0 0 0.2rem rgba(243, 156, 18, 0.25);
+}
+
+.modal-content {
+    background-color: var(--card-bg);
+    border: 1px solid #444;
+}
+
+.modal-header {
+    border-bottom: 1px solid #444;
+}
+
+.modal-footer {
+    border-top: 1px solid #444;
+}
+
+.progress {
+    background-color: #333;
+}
+
+.progress-bar {
+    background-color: var(--primary-color);
+}
+
+.transactions-scroll {
+    max-height: 350px;
+    overflow-y: auto;
+}
+
+.status-matched {
+    display: inline-block;
+    padding: 2px 8px;
+    border: 2px solid var(--success-color);
+    border-radius: 4px;
+    background: rgba(39, 174, 96, 0.15);
+    color: var(--success-color);
+    font-weight: bold;
+    font-size: 0.95em;
+}
+
+.alerts-scroll {
+    max-height: 180px;
+    min-height: 120px;
+    overflow-y: auto;
+    height: 180px;
+    background: none;
+    padding: 0.5rem 0.25rem;
+    position: relative;
+}
+
+#noAlertsMessage {
+    transition: opacity 0.3s;
+    opacity: 1;
+    position: absolute;
+    left: 0; right: 0; top: 50%;
+    transform: translateY(-50%);
+    width: 100%;
+    z-index: 1;
+    pointer-events: none;
+}
+#noAlertsMessage.hidden {
+    opacity: 0;
+    pointer-events: none;
+}
+.alerts-scroll .alert {
+    position: relative;
+    z-index: 2;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .simulation-controls {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .market-data {
+        grid-template-columns: 1fr;
+    }
+    
+    .stats-card {
+        margin-bottom: 1rem;
+    }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #2a2a2a;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #666;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #777;
+}

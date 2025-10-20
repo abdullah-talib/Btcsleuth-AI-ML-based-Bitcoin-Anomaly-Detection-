@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block title %}Upload Analysis - Bitcoin Anomaly Detection System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <h3 class="card-title mb-0">
+                    <i class="fas fa-upload"></i> Upload CSV for Analysis
+                </h3>
+            </div>
+            <div class="card-body">
+                <form id="uploadForm" method="POST" enctype="multipart/form-data">
+                    <!-- Upload Area -->
+                    <div class="upload-area mb-4" id="uploadArea">
+                        <i class="fas fa-cloud-upload-alt file-upload-icon"></i>
+                        <div class="upload-text">
+                            <h5>Drag & drop your CSV file here</h5>
+                            <p class="text-muted">or click to browse</p>
+                            <p class="text-muted">
+                                <small>Supported format: CSV (max 10MB)</small>
+                            </p>
+                        </div>
+                        <input type="file" name="file" id="fileInput" accept=".csv" style="display: none;">
+                    </div>
+                    
+                    <!-- Loading Spinner -->
+                    <div class="loading-spinner" id="loadingSpinner">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading...</span>
+                        </div>
+                        <p class="mt-2">Analyzing your data...</p>
+                    </div>
+                    
+                    <!-- Progress Bar -->
+                    <div class="progress mb-3" id="uploadProgress" style="display: none;">
+                        <div class="progress-bar" id="progressBar" role="progressbar" style="width: 0%">
+                            0%
+                        </div>
+                    </div>
+                    
+                    <!-- Submit Button -->
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg" id="submitBtn" disabled>
+                            <i class="fas fa-chart-line"></i> Analyze File
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Analysis Information -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle"></i> Analysis Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-file-csv text-primary"></i> Supported Formats</h6>
+                        <ul class="list-unstyled">
+                            <li>• CSV files with transaction data</li>
+                            <li>• Maximum file size: 10MB</li>
+                            <li>• UTF-8 encoding recommended</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-brain text-success"></i> ML Models Used</h6>
+                        <ul class="list-unstyled">
+                            <li>• Support Vector Machine (SVM)</li>
+                            <li>• Random Forest Classifier</li>
+                            <li>• AdaBoost Classifier</li>
+                            <li>• XGBoost Classifier</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-search text-warning"></i> What We Analyze</h6>
+                        <ul class="list-unstyled">
+                            <li>• Transaction patterns</li>
+                            <li>• Volume anomalies</li>
+                            <li>• Price deviations</li>
+                            <li>• Temporal patterns</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h6><i class="fas fa-chart-pie text-info"></i> Results Include</h6>
+                        <ul class="list-unstyled">
+                            <li>• Anomaly detection results</li>
+                            <li>• Statistical analysis</li>
+                            <li>• Visual charts and graphs</li>
+                            <li>• Downloadable reports</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Sample Data Format -->
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-table"></i> Expected Data Format
+                </h5>
+            </div>
+            <div class="card-body">
+                <p class="text-muted">Your CSV file must include either of these column pairs:</p>
+                <ul>
+                    <li><code>price</code> and <code>qty</code></li>
+                    <li>or <code>close</code> and <code>volume</code></li>
+                </ul>
+                <div class="table-responsive">
+                    <table class="table table-dark table-sm">
+                        <thead>
+                            <tr>
+                                <th>timestamp</th>
+                                <th>price</th>
+                                <th>qty</th>
+                                <th>amount</th>
+                                <th>transaction_id</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>2025-01-01 12:00:00</td>
+                                <td>65000.50</td>
+                                <td>1.23456</td>
+                                <td>80000.25</td>
+                                <td>tx_001</td>
+                            </tr>
+                            <tr>
+                                <td>2025-01-01 12:01:00</td>
+                                <td>65100.75</td>
+                                <td>2.34567</td>
+                                <td>152750.30</td>
+                                <td>tx_002</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <p class="text-muted mt-2">
+                    <small>
+                        <i class="fas fa-info-circle"></i>
+                        Files missing these headers will be rejected. Values are auto-detected as numeric.
+                    </small>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/upload.js') }}"></script>
+{% endblock %}
